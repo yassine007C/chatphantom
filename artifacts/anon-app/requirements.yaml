@@ -1,0 +1,20 @@
+packages:
+  "framer-motion": "For stunning page transitions and micro-interactions"
+  "uuid": "To generate stable guest session IDs for anonymous tracking"
+  "@types/uuid": "Types for uuid"
+  "date-fns": "For formatting message and post timestamps relative to now"
+  "clsx": "Utility for conditional class names"
+  "tailwind-merge": "Utility for merging tailwind classes safely"
+
+images:
+  - path: "artifacts/anon-app/public/images/hero-bg.png"
+    description: "Abstract 3D gradient mesh background in deep space purple, midnight blue, and neon pink. Extremely sleek, modern, glassmorphism aesthetic, highly detailed, 8k resolution, suitable for a dark mode website hero section."
+    aspect_ratio: "16:9"
+  - path: "artifacts/anon-app/public/images/logo.png"
+    description: "Minimalist modern app icon logo for an anonymous messaging app. Features a sleek, glowing neon purple ghost or mask motif on a completely transparent background. Premium, vector style, symmetric."
+    aspect_ratio: "1:1"
+
+notes:
+  - "The app uses a strict dark mode aesthetic with deep purples and neon accents."
+  - "Auth token is stored in localStorage as 'anon_token' and manually injected into React Query request options since custom-fetch.ts cannot be modified directly."
+  - "Guest users get a UUID stored in localStorage as 'guest_id' to track anonymous conversations without requiring login."

@@ -1,0 +1,26 @@
+Write a complete object-oriented PHP web application using the MVC pattern and MySQL (via PDO) that functions like an anonymous messaging platform. The application must include the following features:
+User authentication system (register, login, logout) using password_hash.
+A public feed where users can create posts. Include a toggle to publish the post anonymously or with their username attached.
+A profile link generator (e.g., site.com/u/username) that users can share to receive anonymous messages from guests or other logged-in users.
+A private inbox dashboard where users can read received anonymous messages and reply directly to the anonymous sender's thread.
+Secure session management, CSRF token protection on all forms, and htmlspecialchars for XSS prevention on all outputs.
+Please provide the complete schema.sql file, the database connection class, the routing logic, and the core controllers and views for the feed and inbox."
+Database Schema Structure
+Your PHP application will require a relational database structure. Instruct your database setup to use the following tables:
+users: Stores id, username, email, password_hash, and created_at.
+public_posts: Stores id, user_id (foreign key, nullable), content, is_anonymous (boolean), and created_at.
+conversations: Stores id, owner_id (the user receiving the link), guest_session_id (to track unregistered anonymous senders), and created_at.
+messages: Stores id, conversation_id (foreign key), sender_id (nullable for anonymous), body, is_read (boolean), and created_at.
+Core PHP Directory Layout
+Request your generation tool to organize the PHP files using this standard structure to keep the logic separated:
+config/: Contains database.php for PDO connection setup.
+models/: Contains classes like User.php, Post.php, and Message.php to handle direct SQL queries.
+controllers/: Contains AuthController.php, FeedController.php, and InboxController.php to process form data and handle business logic.
+views/: Contains HTML/PHP templates for the public feed, profile messaging page, and private inbox.
+public/: Contains the index.php entry point, CSS, and JavaScript files.
+Security and Moderation Requirements
+When building this in PHP, you must enforce strict security measures due to the nature of anonymous input:
+Use prepared statements (PDO::prepare) for every database query to prevent SQL injection.
+Implement rate limiting by logging IP addresses and timestamps in a rate_limits table to prevent spam in the public feed and anonymous inboxes.
+Filter incoming message content using PHP's preg_replace to block severe profanity or malicious links before inserting them into the database.
+Require authenticated sessions ($_SESSION['user_id']) to access the inbox and reply features, while allowing guest sessions (session_start()) to send initial anonymous messages. Add a window that displays a list of current users with their real profile names. As a user, I can send them real messages, but they will be anonymous, meaning they won't see the sent profile.
