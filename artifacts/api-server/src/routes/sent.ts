@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, conversationsTable, messagesTable } from "@workspace/db";
+import { db, conversationsTable, messagesTable, usersTable } from "@workspace/db";
 import { eq, desc, count, and, sql } from "drizzle-orm";
 import { ReplyAsSenderBody } from "@workspace/api-zod";
 import { filterContent } from "../lib/contentFilter";
@@ -15,8 +15,15 @@ router.get("/sent", async (req, res) => {
   }
 
   const conversations = await db
-    .select()
+    .select({
+      id: conversationsTable.id,
+      guestSessionId: conversationsTable.guestSessionId,
+      anonymousAlias: conversationsTable.anonymousAlias,
+      createdAt: conversationsTable.createdAt,
+      ownerUsername: usersTable.username,
+    })
     .from(conversationsTable)
+    .innerJoin(usersTable, eq(conversationsTable.ownerId, usersTable.id))
     .where(eq(conversationsTable.guestSessionId, guestSessionId))
     .orderBy(desc(conversationsTable.createdAt));
 
@@ -44,6 +51,7 @@ router.get("/sent", async (req, res) => {
         id: conv.id,
         guestSessionId: conv.guestSessionId,
         anonymousAlias: conv.anonymousAlias,
+        ownerUsername: conv.ownerUsername,
         lastMessage: last?.body ?? null,
         lastMessageAt: last?.createdAt ?? null,
         unreadCount: Number(unread),
@@ -65,8 +73,15 @@ router.get("/sent/:conversationId", async (req, res) => {
   }
 
   const [conv] = await db
-    .select()
+    .select({
+      id: conversationsTable.id,
+      guestSessionId: conversationsTable.guestSessionId,
+      anonymousAlias: conversationsTable.anonymousAlias,
+      createdAt: conversationsTable.createdAt,
+      ownerUsername: usersTable.username,
+    })
     .from(conversationsTable)
+    .innerJoin(usersTable, eq(conversationsTable.ownerId, usersTable.id))
     .where(
       and(
         eq(conversationsTable.id, conversationId),
@@ -128,6 +143,7 @@ router.get("/sent/:conversationId", async (req, res) => {
       id: conv.id,
       guestSessionId: conv.guestSessionId,
       anonymousAlias: conv.anonymousAlias,
+      ownerUsername: conv.ownerUsername,
       lastMessage: last?.body ?? null,
       lastMessageAt: last?.createdAt ?? null,
       unreadCount: Number(unread),

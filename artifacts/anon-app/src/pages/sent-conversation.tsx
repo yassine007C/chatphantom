@@ -70,9 +70,11 @@ export default function SentConversation() {
           </div>
           <div>
             <h2 className="font-bold text-lg text-white leading-tight">
-              {data?.conversation?.anonymousAlias || "Anonymous"}
+              {(data?.conversation as any)?.ownerUsername ? `@${(data.conversation as any).ownerUsername}` : "Unknown user"}
             </h2>
-            <p className="text-xs text-accent/80 font-medium">Your alias · they can't see who you are</p>
+            <p className="text-xs text-accent/80 font-medium">
+              You appear as <span className="font-semibold">{data?.conversation?.anonymousAlias || "Anonymous"}</span>
+            </p>
           </div>
         </div>
       </div>

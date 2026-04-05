@@ -166,7 +166,9 @@ export default function Inbox() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-semibold text-white/90">
-                          {conv.anonymousAlias || (tab === "received" ? "Anonymous" : "Your anonymous message")}
+                          {tab === "received"
+                            ? (conv.anonymousAlias || "Anonymous")
+                            : ((conv as any).ownerUsername ? `@${(conv as any).ownerUsername}` : "Unknown user")}
                         </h3>
                         <span className="text-xs flex items-center gap-1 text-muted-foreground">
                           <Clock className="w-3 h-3" />
