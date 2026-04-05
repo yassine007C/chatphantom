@@ -69,8 +69,10 @@ export default function SentConversation() {
             <Ghost className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="font-bold text-lg text-white leading-tight">Your Anonymous Thread</h2>
-            <p className="text-xs text-accent/80 font-medium">They can't see who you are</p>
+            <h2 className="font-bold text-lg text-white leading-tight">
+              {data?.conversation?.anonymousAlias || "Anonymous"}
+            </h2>
+            <p className="text-xs text-accent/80 font-medium">Your alias · they can't see who you are</p>
           </div>
         </div>
       </div>

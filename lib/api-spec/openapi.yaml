@@ -616,6 +616,8 @@ components:
           type: integer
         guestSessionId:
           type: string
+        anonymousAlias:
+          type: string
         lastMessage:
           type: string
           nullable: true
@@ -631,6 +633,7 @@ components:
       required:
         - id
         - guestSessionId
+        - anonymousAlias
         - unreadCount
         - createdAt
 

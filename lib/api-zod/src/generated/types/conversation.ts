@@ -9,6 +9,7 @@
 export interface Conversation {
   id: number;
   guestSessionId: string;
+  anonymousAlias: string;
   lastMessage?: string | null;
   lastMessageAt?: Date | null;
   unreadCount: number;

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, conversationsTable, messagesTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
 import { SendAnonymousMessageBody } from "@workspace/api-zod";
 import { rateLimit } from "../middlewares/rateLimit";
 import { filterContent } from "../lib/contentFilter";
@@ -69,9 +69,17 @@ router.post(
       .limit(1);
 
     if (!conversation) {
+      const [{ total }] = await db
+        .select({ total: count() })
+        .from(conversationsTable)
+        .where(eq(conversationsTable.ownerId, owner.id));
+
+      const aliasNumber = Number(total) + 1;
+      const anonymousAlias = `Anonymous${aliasNumber}`;
+
       [conversation] = await db
         .insert(conversationsTable)
-        .values({ ownerId: owner.id, guestSessionId })
+        .values({ ownerId: owner.id, guestSessionId, anonymousAlias })
         .returning();
     }
 

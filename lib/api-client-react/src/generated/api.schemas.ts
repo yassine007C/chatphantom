@@ -91,6 +91,7 @@ export interface SendMessageRequest {
 export interface Conversation {
   id: number;
   guestSessionId: string;
+  anonymousAlias: string;
   lastMessage?: string | null;
   lastMessageAt?: string | null;
   unreadCount: number;

@@ -63,6 +63,7 @@ router.get("/inbox", requireAuth, async (req, res) => {
       return {
         id: conv.id,
         guestSessionId: conv.guestSessionId,
+        anonymousAlias: conv.anonymousAlias,
         lastMessage: last?.body ?? null,
         lastMessageAt: last?.createdAt ?? null,
         unreadCount: Number(unread),
@@ -146,6 +147,7 @@ router.get("/inbox/:conversationId", requireAuth, async (req, res) => {
     conversation: {
       id: conv.id,
       guestSessionId: conv.guestSessionId,
+      anonymousAlias: conv.anonymousAlias,
       lastMessage: last?.body ?? null,
       lastMessageAt: last?.createdAt ?? null,
       unreadCount: Number(unread),

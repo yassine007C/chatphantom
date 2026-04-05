@@ -150,6 +150,7 @@ export const GetInboxResponse = zod.object({
     zod.object({
       id: zod.number(),
       guestSessionId: zod.string(),
+      anonymousAlias: zod.string(),
       lastMessage: zod.string().nullish(),
       lastMessageAt: zod.date().nullish(),
       unreadCount: zod.number(),
@@ -169,6 +170,7 @@ export const GetConversationResponse = zod.object({
   conversation: zod.object({
     id: zod.number(),
     guestSessionId: zod.string(),
+    anonymousAlias: zod.string(),
     lastMessage: zod.string().nullish(),
     lastMessageAt: zod.date().nullish(),
     unreadCount: zod.number(),
@@ -218,6 +220,7 @@ export const GetSentConversationsResponse = zod.object({
     zod.object({
       id: zod.number(),
       guestSessionId: zod.string(),
+      anonymousAlias: zod.string(),
       lastMessage: zod.string().nullish(),
       lastMessageAt: zod.date().nullish(),
       unreadCount: zod.number(),
@@ -241,6 +244,7 @@ export const GetSentConversationResponse = zod.object({
   conversation: zod.object({
     id: zod.number(),
     guestSessionId: zod.string(),
+    anonymousAlias: zod.string(),
     lastMessage: zod.string().nullish(),
     lastMessageAt: zod.date().nullish(),
     unreadCount: zod.number(),

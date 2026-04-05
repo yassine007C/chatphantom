@@ -43,6 +43,7 @@ router.get("/sent", async (req, res) => {
       return {
         id: conv.id,
         guestSessionId: conv.guestSessionId,
+        anonymousAlias: conv.anonymousAlias,
         lastMessage: last?.body ?? null,
         lastMessageAt: last?.createdAt ?? null,
         unreadCount: Number(unread),
@@ -126,6 +127,7 @@ router.get("/sent/:conversationId", async (req, res) => {
     conversation: {
       id: conv.id,
       guestSessionId: conv.guestSessionId,
+      anonymousAlias: conv.anonymousAlias,
       lastMessage: last?.body ?? null,
       lastMessageAt: last?.createdAt ?? null,
       unreadCount: Number(unread),
@@ -146,7 +148,7 @@ router.post(
       return;
     }
 
-    const parsed = SenderReplyBody.safeParse(req.body);
+    const parsed = ReplyAsSenderBody.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "Invalid input" });
       return;
