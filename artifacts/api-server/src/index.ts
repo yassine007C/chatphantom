@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { pool } from "@workspace/db";
 
 const rawPort = process.env["PORT"];
 
@@ -15,11 +16,32 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-app.listen(port, (err) => {
-  if (err) {
-    logger.error({ err }, "Error listening on port");
-    process.exit(1);
+async function runMigrations() {
+  const client = await pool.connect();
+  try {
+    await client.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS anonymous_alias text NOT NULL DEFAULT 'Anonymous'
+    `);
+    logger.info("Migrations applied");
+  } catch (err) {
+    logger.error({ err }, "Migration failed");
+    throw err;
+  } finally {
+    client.release();
   }
+}
 
-  logger.info({ port }, "Server listening");
+runMigrations().then(() => {
+  app.listen(port, (err) => {
+    if (err) {
+      logger.error({ err }, "Error listening on port");
+      process.exit(1);
+    }
+
+    logger.info({ port }, "Server listening");
+  });
+}).catch((err) => {
+  logger.error({ err }, "Failed to run migrations, exiting");
+  process.exit(1);
 });
