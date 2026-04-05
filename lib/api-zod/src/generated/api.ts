@@ -205,3 +205,69 @@ export const ReplyToConversationBody = zod.object({
 export const GetUnreadCountResponse = zod.object({
   count: zod.number(),
 });
+
+/**
+ * @summary Get conversations the current user started as an anonymous sender
+ */
+export const GetSentConversationsQueryParams = zod.object({
+  guestSessionId: zod.coerce.string(),
+});
+
+export const GetSentConversationsResponse = zod.object({
+  conversations: zod.array(
+    zod.object({
+      id: zod.number(),
+      guestSessionId: zod.string(),
+      lastMessage: zod.string().nullish(),
+      lastMessageAt: zod.date().nullish(),
+      unreadCount: zod.number(),
+      createdAt: zod.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Get messages in a sent conversation
+ */
+export const GetSentConversationParams = zod.object({
+  conversationId: zod.coerce.number(),
+});
+
+export const GetSentConversationQueryParams = zod.object({
+  guestSessionId: zod.coerce.string(),
+});
+
+export const GetSentConversationResponse = zod.object({
+  conversation: zod.object({
+    id: zod.number(),
+    guestSessionId: zod.string(),
+    lastMessage: zod.string().nullish(),
+    lastMessageAt: zod.date().nullish(),
+    unreadCount: zod.number(),
+    createdAt: zod.date(),
+  }),
+  messages: zod.array(
+    zod.object({
+      id: zod.number(),
+      conversationId: zod.number(),
+      body: zod.string(),
+      isRead: zod.boolean(),
+      isFromOwner: zod.boolean(),
+      createdAt: zod.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Send a follow-up message in a conversation as the anonymous sender
+ */
+export const ReplyAsSenderParams = zod.object({
+  conversationId: zod.coerce.number(),
+});
+
+export const replyAsSenderBodyBodyMax = 1000;
+
+export const ReplyAsSenderBody = zod.object({
+  body: zod.string().min(1).max(replyAsSenderBodyBodyMax),
+  guestSessionId: zod.string(),
+});

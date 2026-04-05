@@ -355,6 +355,86 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /sent:
+    get:
+      operationId: getSentConversations
+      tags: [inbox]
+      summary: Get conversations the current user started as an anonymous sender
+      parameters:
+        - in: query
+          name: guestSessionId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of sent conversations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InboxResponse"
+
+  /sent/{conversationId}:
+    get:
+      operationId: getSentConversation
+      tags: [inbox]
+      summary: Get messages in a sent conversation
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: guestSessionId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Conversation messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationResponse"
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sent/{conversationId}/reply:
+    post:
+      operationId: replyAsSender
+      tags: [inbox]
+      summary: Send a follow-up message in a conversation as the anonymous sender
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderReplyRequest"
+      responses:
+        "201":
+          description: Reply sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -618,3 +698,16 @@ components:
           type: integer
       required:
         - count
+
+    SenderReplyRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        guestSessionId:
+          type: string
+      required:
+        - body
+        - guestSessionId

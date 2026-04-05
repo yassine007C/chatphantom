@@ -23,6 +23,8 @@ import type {
   ErrorResponse,
   FeedResponse,
   GetFeedParams,
+  GetSentConversationParams,
+  GetSentConversationsParams,
   HealthStatus,
   InboxResponse,
   LoginRequest,
@@ -31,6 +33,7 @@ import type {
   RegisterRequest,
   ReplyRequest,
   SendMessageRequest,
+  SenderReplyRequest,
   UnreadCountResponse,
   UserInfo,
   UserListResponse,
@@ -1173,3 +1176,308 @@ export function useGetUnreadCount<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get conversations the current user started as an anonymous sender
+ */
+export const getGetSentConversationsUrl = (
+  params: GetSentConversationsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/sent?${stringifiedParams}`
+    : `/api/sent`;
+};
+
+export const getSentConversations = async (
+  params: GetSentConversationsParams,
+  options?: RequestInit,
+): Promise<InboxResponse> => {
+  return customFetch<InboxResponse>(getGetSentConversationsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSentConversationsQueryKey = (
+  params?: GetSentConversationsParams,
+) => {
+  return [`/api/sent`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetSentConversationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSentConversations>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetSentConversationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSentConversations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSentConversationsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSentConversations>>
+  > = ({ signal }) =>
+    getSentConversations(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSentConversations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSentConversationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSentConversations>>
+>;
+export type GetSentConversationsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get conversations the current user started as an anonymous sender
+ */
+
+export function useGetSentConversations<
+  TData = Awaited<ReturnType<typeof getSentConversations>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetSentConversationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSentConversations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSentConversationsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get messages in a sent conversation
+ */
+export const getGetSentConversationUrl = (
+  conversationId: number,
+  params: GetSentConversationParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/sent/${conversationId}?${stringifiedParams}`
+    : `/api/sent/${conversationId}`;
+};
+
+export const getSentConversation = async (
+  conversationId: number,
+  params: GetSentConversationParams,
+  options?: RequestInit,
+): Promise<ConversationResponse> => {
+  return customFetch<ConversationResponse>(
+    getGetSentConversationUrl(conversationId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetSentConversationQueryKey = (
+  conversationId: number,
+  params?: GetSentConversationParams,
+) => {
+  return [`/api/sent/${conversationId}`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetSentConversationQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSentConversation>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  conversationId: number,
+  params: GetSentConversationParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSentConversation>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetSentConversationQueryKey(conversationId, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSentConversation>>
+  > = ({ signal }) =>
+    getSentConversation(conversationId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!conversationId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSentConversation>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSentConversationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSentConversation>>
+>;
+export type GetSentConversationQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get messages in a sent conversation
+ */
+
+export function useGetSentConversation<
+  TData = Awaited<ReturnType<typeof getSentConversation>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  conversationId: number,
+  params: GetSentConversationParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSentConversation>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSentConversationQueryOptions(
+    conversationId,
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Send a follow-up message in a conversation as the anonymous sender
+ */
+export const getReplyAsSenderUrl = (conversationId: number) => {
+  return `/api/sent/${conversationId}/reply`;
+};
+
+export const replyAsSender = async (
+  conversationId: number,
+  senderReplyRequest: SenderReplyRequest,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getReplyAsSenderUrl(conversationId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(senderReplyRequest),
+  });
+};
+
+export const getReplyAsSenderMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof replyAsSender>>,
+    TError,
+    { conversationId: number; data: BodyType<SenderReplyRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof replyAsSender>>,
+  TError,
+  { conversationId: number; data: BodyType<SenderReplyRequest> },
+  TContext
+> => {
+  const mutationKey = ["replyAsSender"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof replyAsSender>>,
+    { conversationId: number; data: BodyType<SenderReplyRequest> }
+  > = (props) => {
+    const { conversationId, data } = props ?? {};
+
+    return replyAsSender(conversationId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReplyAsSenderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof replyAsSender>>
+>;
+export type ReplyAsSenderMutationBody = BodyType<SenderReplyRequest>;
+export type ReplyAsSenderMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Send a follow-up message in a conversation as the anonymous sender
+ */
+export const useReplyAsSender = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof replyAsSender>>,
+    TError,
+    { conversationId: number; data: BodyType<SenderReplyRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof replyAsSender>>,
+  TError,
+  { conversationId: number; data: BodyType<SenderReplyRequest> },
+  TContext
+> => {
+  return useMutation(getReplyAsSenderMutationOptions(options));
+};

@@ -11,6 +11,7 @@ import Directory from "./pages/directory";
 import Profile from "./pages/profile";
 import Inbox from "./pages/inbox";
 import Conversation from "./pages/conversation";
+import SentConversation from "./pages/sent-conversation";
 import Login from "./pages/login";
 import Register from "./pages/register";
 
@@ -37,6 +38,7 @@ function Router() {
         <Route path="/u/:username" component={Profile} />
         <Route path="/inbox" component={Inbox} />
         <Route path="/inbox/:id" component={Conversation} />
+        <Route path="/sent/:id" component={SentConversation} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route component={NotFound} />

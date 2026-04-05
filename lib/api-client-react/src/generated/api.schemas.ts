@@ -127,7 +127,24 @@ export interface UnreadCountResponse {
   count: number;
 }
 
+export interface SenderReplyRequest {
+  /**
+   * @minLength 1
+   * @maxLength 1000
+   */
+  body: string;
+  guestSessionId: string;
+}
+
 export type GetFeedParams = {
   page?: number;
   limit?: number;
+};
+
+export type GetSentConversationsParams = {
+  guestSessionId: string;
+};
+
+export type GetSentConversationParams = {
+  guestSessionId: string;
 };
