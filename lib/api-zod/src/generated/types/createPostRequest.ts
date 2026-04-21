@@ -12,5 +12,6 @@ export interface CreatePostRequest {
    * @maxLength 1000
    */
   content: string;
+  imageUrl?: string | null;
   isAnonymous: boolean;
 }

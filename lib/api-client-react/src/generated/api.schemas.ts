@@ -33,10 +33,15 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface UpdateAvatarRequest {
+  avatarUrl: string;
+}
+
 export interface UserInfo {
   id: number;
   username: string;
   email: string;
+  avatarUrl?: string | null;
   createdAt: string;
 }
 
@@ -48,8 +53,10 @@ export interface AuthResponse {
 export interface Post {
   id: number;
   content: string;
+  imageUrl?: string | null;
   isAnonymous: boolean;
   username?: string | null;
+  avatarUrl?: string | null;
   createdAt: string;
 }
 
@@ -66,12 +73,14 @@ export interface CreatePostRequest {
    * @maxLength 1000
    */
   content: string;
+  imageUrl?: string | null;
   isAnonymous: boolean;
 }
 
 export interface UserProfile {
   id: number;
   username: string;
+  avatarUrl?: string | null;
   createdAt: string;
 }
 
@@ -85,6 +94,7 @@ export interface SendMessageRequest {
    * @maxLength 1000
    */
   body: string;
+  imageUrl?: string | null;
   guestSessionId?: string;
 }
 
@@ -106,6 +116,7 @@ export interface InboxMessage {
   id: number;
   conversationId: number;
   body: string;
+  imageUrl?: string | null;
   isRead: boolean;
   isFromOwner: boolean;
   createdAt: string;
@@ -122,6 +133,7 @@ export interface ReplyRequest {
    * @maxLength 1000
    */
   body: string;
+  imageUrl?: string | null;
 }
 
 export interface UnreadCountResponse {
@@ -134,7 +146,22 @@ export interface SenderReplyRequest {
    * @maxLength 1000
    */
   body: string;
+  imageUrl?: string | null;
   guestSessionId: string;
+}
+
+export interface UploadUrlRequest {
+  /** @minLength 1 */
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  /** @minLength 1 */
+  contentType: string;
+}
+
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
 }
 
 export type GetFeedParams = {

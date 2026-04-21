@@ -7,6 +7,7 @@ export const publicPostsTable = pgTable("public_posts", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => usersTable.id),
   content: text("content").notNull(),
+  imageUrl: text("image_url"),
   isAnonymous: boolean("is_anonymous").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

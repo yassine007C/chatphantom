@@ -5,6 +5,7 @@ import feedRouter from "./feed";
 import usersRouter from "./users";
 import inboxRouter from "./inbox";
 import sentRouter from "./sent";
+import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(feedRouter);
 router.use(usersRouter);
 router.use(inboxRouter);
 router.use(sentRouter);
+router.use(storageRouter);
 
 export default router;

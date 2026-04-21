@@ -17,6 +17,8 @@ tags:
     description: Inbox and messaging operations
   - name: users
     description: User directory and profile operations
+  - name: Storage
+    description: Object storage upload and serving endpoints.
 
 paths:
   /healthz:
@@ -109,6 +111,31 @@ paths:
       responses:
         "200":
           description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me/avatar:
+    patch:
+      operationId: updateAvatar
+      tags: [auth]
+      summary: Update current user's avatar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAvatarRequest"
+      responses:
+        "200":
+          description: Avatar updated
           content:
             application/json:
               schema:
@@ -435,6 +462,89 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /storage/uploads/request-url:
+    post:
+      tags: [Storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+      responses:
+        '200':
+          description: Presigned upload URL generated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to generate upload URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /storage/public-objects/{filePath}:
+    get:
+      tags: [Storage]
+      operationId: getPublicObject
+      summary: Serve a public asset
+      parameters:
+        - name: filePath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Object content.
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: File not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /storage/objects/{objectPath}:
+    get:
+      tags: [Storage]
+      operationId: getStorageObject
+      summary: Serve an uploaded object
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Object content.
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Object not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     HealthStatus:
@@ -490,6 +600,14 @@ components:
         - usernameOrEmail
         - password
 
+    UpdateAvatarRequest:
+      type: object
+      properties:
+        avatarUrl:
+          type: string
+      required:
+        - avatarUrl
+
     UserInfo:
       type: object
       properties:
@@ -499,6 +617,9 @@ components:
           type: string
         email:
           type: string
+        avatarUrl:
+          type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -526,9 +647,15 @@ components:
           type: integer
         content:
           type: string
+        imageUrl:
+          type: string
+          nullable: true
         isAnonymous:
           type: boolean
         username:
+          type: string
+          nullable: true
+        avatarUrl:
           type: string
           nullable: true
         createdAt:
@@ -566,6 +693,9 @@ components:
           type: string
           minLength: 1
           maxLength: 1000
+        imageUrl:
+          type: string
+          nullable: true
         isAnonymous:
           type: boolean
       required:
@@ -589,6 +719,9 @@ components:
           type: integer
         username:
           type: string
+        avatarUrl:
+          type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -604,6 +737,9 @@ components:
           type: string
           minLength: 1
           maxLength: 1000
+        imageUrl:
+          type: string
+          nullable: true
         guestSessionId:
           type: string
       required:
@@ -656,6 +792,9 @@ components:
           type: integer
         body:
           type: string
+        imageUrl:
+          type: string
+          nullable: true
         isRead:
           type: boolean
         isFromOwner:
@@ -691,6 +830,9 @@ components:
           type: string
           minLength: 1
           maxLength: 1000
+        imageUrl:
+          type: string
+          nullable: true
       required:
         - body
 
@@ -709,8 +851,35 @@ components:
           type: string
           minLength: 1
           maxLength: 1000
+        imageUrl:
+          type: string
+          nullable: true
         guestSessionId:
           type: string
       required:
         - body
         - guestSessionId
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+        objectPath:
+          type: string

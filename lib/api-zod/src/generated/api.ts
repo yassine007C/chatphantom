@@ -44,6 +44,7 @@ export const LoginResponse = zod.object({
     id: zod.number(),
     username: zod.string(),
     email: zod.string(),
+    avatarUrl: zod.string().nullish(),
     createdAt: zod.date(),
   }),
   token: zod.string(),
@@ -63,6 +64,22 @@ export const GetMeResponse = zod.object({
   id: zod.number(),
   username: zod.string(),
   email: zod.string(),
+  avatarUrl: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary Update current user's avatar
+ */
+export const UpdateAvatarBody = zod.object({
+  avatarUrl: zod.string(),
+});
+
+export const UpdateAvatarResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  email: zod.string(),
+  avatarUrl: zod.string().nullish(),
   createdAt: zod.date(),
 });
 
@@ -82,8 +99,10 @@ export const GetFeedResponse = zod.object({
     zod.object({
       id: zod.number(),
       content: zod.string(),
+      imageUrl: zod.string().nullish(),
       isAnonymous: zod.boolean(),
       username: zod.string().nullish(),
+      avatarUrl: zod.string().nullish(),
       createdAt: zod.date(),
     }),
   ),
@@ -99,6 +118,7 @@ export const createPostBodyContentMax = 1000;
 
 export const CreatePostBody = zod.object({
   content: zod.string().min(1).max(createPostBodyContentMax),
+  imageUrl: zod.string().nullish(),
   isAnonymous: zod.boolean(),
 });
 
@@ -110,6 +130,7 @@ export const GetUsersResponse = zod.object({
     zod.object({
       id: zod.number(),
       username: zod.string(),
+      avatarUrl: zod.string().nullish(),
       createdAt: zod.date(),
     }),
   ),
@@ -125,6 +146,7 @@ export const GetUserProfileParams = zod.object({
 export const GetUserProfileResponse = zod.object({
   id: zod.number(),
   username: zod.string(),
+  avatarUrl: zod.string().nullish(),
   createdAt: zod.date(),
 });
 
@@ -139,6 +161,7 @@ export const sendAnonymousMessageBodyBodyMax = 1000;
 
 export const SendAnonymousMessageBody = zod.object({
   body: zod.string().min(1).max(sendAnonymousMessageBodyBodyMax),
+  imageUrl: zod.string().nullish(),
   guestSessionId: zod.string().optional(),
 });
 
@@ -181,6 +204,7 @@ export const GetConversationResponse = zod.object({
       id: zod.number(),
       conversationId: zod.number(),
       body: zod.string(),
+      imageUrl: zod.string().nullish(),
       isRead: zod.boolean(),
       isFromOwner: zod.boolean(),
       createdAt: zod.date(),
@@ -199,6 +223,7 @@ export const replyToConversationBodyBodyMax = 1000;
 
 export const ReplyToConversationBody = zod.object({
   body: zod.string().min(1).max(replyToConversationBodyBodyMax),
+  imageUrl: zod.string().nullish(),
 });
 
 /**
@@ -255,6 +280,7 @@ export const GetSentConversationResponse = zod.object({
       id: zod.number(),
       conversationId: zod.number(),
       body: zod.string(),
+      imageUrl: zod.string().nullish(),
       isRead: zod.boolean(),
       isFromOwner: zod.boolean(),
       createdAt: zod.date(),
@@ -273,5 +299,35 @@ export const replyAsSenderBodyBodyMax = 1000;
 
 export const ReplyAsSenderBody = zod.object({
   body: zod.string().min(1).max(replyAsSenderBodyBodyMax),
+  imageUrl: zod.string().nullish(),
   guestSessionId: zod.string(),
+});
+
+/**
+ * @summary Request a presigned URL for file upload
+ */
+
+export const RequestUploadUrlBody = zod.object({
+  name: zod.string().min(1),
+  size: zod.number().min(1),
+  contentType: zod.string().min(1),
+});
+
+export const RequestUploadUrlResponse = zod.object({
+  uploadURL: zod.string().url(),
+  objectPath: zod.string(),
+});
+
+/**
+ * @summary Serve a public asset
+ */
+export const GetPublicObjectParams = zod.object({
+  filePath: zod.coerce.string(),
+});
+
+/**
+ * @summary Serve an uploaded object
+ */
+export const GetStorageObjectParams = zod.object({
+  objectPath: zod.coerce.string(),
 });

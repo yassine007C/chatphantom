@@ -10,6 +10,7 @@ export interface InboxMessage {
   id: number;
   conversationId: number;
   body: string;
+  imageUrl?: string | null;
   isRead: boolean;
   isFromOwner: boolean;
   createdAt: Date;

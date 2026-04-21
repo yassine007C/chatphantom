@@ -4,18 +4,23 @@ import { useGetSentConversation, useReplyAsSender } from "@workspace/api-client-
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
-import { Send, ArrowLeft, Ghost, User as UserIcon } from "lucide-react";
+import { Send, ArrowLeft, Ghost, User as UserIcon, ImageIcon, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { GUEST_ID_KEY } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
+import { useImageUpload } from "@/hooks/useImageUpload";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export default function SentConversation() {
   const { id } = useParams<{ id: string }>();
   const convId = parseInt(id || "0");
   const queryClient = useQueryClient();
   const [reply, setReply] = useState("");
+  const [replyImage, setReplyImage] = useState<{ objectPath: string; previewUrl: string } | null>(null);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
+  const { uploadImage, isUploading } = useImageUpload();
 
   const guestId = useMemo(() => {
     let sid = localStorage.getItem(GUEST_ID_KEY);
@@ -38,6 +43,7 @@ export default function SentConversation() {
     mutation: {
       onSuccess: () => {
         setReply("");
+        setReplyImage(null);
         queryClient.invalidateQueries({ queryKey: [`/api/sent/${convId}`] });
       }
     }
@@ -45,11 +51,16 @@ export default function SentConversation() {
 
   const handleReply = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reply.trim()) return;
+    if (!reply.trim() && !replyImage) return;
     replyMutation.mutate({
       conversationId: convId,
-      data: { body: reply, guestSessionId: guestId }
+      data: { body: reply || " ", guestSessionId: guestId, imageUrl: replyImage?.objectPath ?? undefined } as any
     });
+  };
+
+  const handleImageChange = async (file: File) => {
+    const result = await uploadImage(file);
+    if (result) setReplyImage(result);
   };
 
   if (isLoading) return <div className="text-center py-20 animate-pulse text-muted-foreground">Loading thread...</div>;
@@ -86,6 +97,7 @@ export default function SentConversation() {
         ) : (
           data.messages.map((msg) => {
             const isMine = !msg.isFromOwner;
+            const imageUrl = (msg as any).imageUrl;
             return (
               <motion.div
                 key={msg.id}
@@ -100,12 +112,21 @@ export default function SentConversation() {
                     </div>
                   )}
 
-                  <div className={`p-4 rounded-2xl ${
+                  <div className={`rounded-2xl overflow-hidden ${
                     isMine
                       ? 'bg-gradient-to-br from-accent to-primary text-white rounded-br-sm shadow-lg shadow-accent/20'
                       : 'bg-white/10 text-white/90 rounded-bl-sm border border-white/5'
                   }`}>
-                    <p className="whitespace-pre-wrap text-base leading-relaxed">{msg.body}</p>
+                    {imageUrl && (
+                      <img
+                        src={`${BASE}/api/storage${imageUrl}`}
+                        alt="Image"
+                        className="max-w-xs max-h-60 object-cover w-full"
+                      />
+                    )}
+                    {msg.body.trim() && (
+                      <p className="whitespace-pre-wrap text-base leading-relaxed p-4">{msg.body}</p>
+                    )}
                   </div>
 
                   {isMine && (
@@ -126,7 +147,19 @@ export default function SentConversation() {
 
       {/* Reply Input */}
       <div className="p-4 bg-background/50 border-t border-white/5 backdrop-blur-md shrink-0">
+        {replyImage && (
+          <div className="relative inline-block mb-2">
+            <img src={replyImage.previewUrl} alt="Attachment" className="max-h-24 rounded-xl border border-white/10 object-cover" />
+            <button type="button" onClick={() => setReplyImage(null)} className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full flex items-center justify-center">
+              <X className="w-3 h-3 text-white" />
+            </button>
+          </div>
+        )}
         <form onSubmit={handleReply} className="flex gap-2">
+          <label className="cursor-pointer flex items-center justify-center w-12 h-14 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors shrink-0">
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleImageChange(e.target.files[0])} disabled={isUploading} />
+            {isUploading ? <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" /> : <ImageIcon className="w-5 h-5 text-muted-foreground" />}
+          </label>
           <Textarea
             value={reply}
             onChange={(e) => setReply(e.target.value)}
@@ -142,7 +175,7 @@ export default function SentConversation() {
           <Button
             type="submit"
             size="icon"
-            disabled={!reply.trim() || replyMutation.isPending}
+            disabled={(!reply.trim() && !replyImage) || replyMutation.isPending || isUploading}
             className="w-14 h-14 rounded-2xl bg-accent hover:bg-accent/90 text-white shadow-lg shrink-0"
           >
             <Send className="w-5 h-5" />

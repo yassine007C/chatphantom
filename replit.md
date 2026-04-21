@@ -48,6 +48,9 @@ A full-stack anonymous messaging platform similar to NGL/Tellonym.
 - Private inbox with conversation threads and reply support
 - User directory for sending anonymous messages
 - Rate limiting, content filtering (profanity/malicious links), CSRF-free JWT auth
+- Profile picture uploads (avatar) stored in Replit Object Storage
+- Image attachments on public feed posts and messages (inbox/sent/profile)
+- Persistent anonymous aliases per conversation thread
 
 ### Database Schema
 - `users` — id, username, email, password_hash, created_at

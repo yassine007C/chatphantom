@@ -20,9 +20,11 @@ router.get("/feed", optionalAuth, async (req, res) => {
     .select({
       id: publicPostsTable.id,
       content: publicPostsTable.content,
+      imageUrl: publicPostsTable.imageUrl,
       isAnonymous: publicPostsTable.isAnonymous,
       userId: publicPostsTable.userId,
       username: usersTable.username,
+      avatarUrl: usersTable.avatarUrl,
       createdAt: publicPostsTable.createdAt,
     })
     .from(publicPostsTable)
@@ -34,8 +36,10 @@ router.get("/feed", optionalAuth, async (req, res) => {
   const result = posts.map((p) => ({
     id: p.id,
     content: p.content,
+    imageUrl: p.imageUrl ?? null,
     isAnonymous: p.isAnonymous,
     username: p.isAnonymous ? null : (p.username ?? null),
+    avatarUrl: p.isAnonymous ? null : (p.avatarUrl ?? null),
     createdAt: p.createdAt,
   }));
 
@@ -54,12 +58,14 @@ router.post(
     }
     const user = (req as any).user;
     const content = filterContent(parsed.data.content);
+    const imageUrl = (parsed.data as any).imageUrl ?? null;
 
     const [post] = await db
       .insert(publicPostsTable)
       .values({
         userId: user.userId,
         content,
+        imageUrl,
         isAnonymous: parsed.data.isAnonymous,
       })
       .returning();
@@ -67,8 +73,10 @@ router.post(
     res.status(201).json({
       id: post.id,
       content: post.content,
+      imageUrl: post.imageUrl ?? null,
       isAnonymous: post.isAnonymous,
       username: post.isAnonymous ? null : user.username,
+      avatarUrl: null,
       createdAt: post.createdAt,
     });
   }

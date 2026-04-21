@@ -5,10 +5,21 @@ import { eq, or } from "drizzle-orm";
 import {
   RegisterBody,
   LoginBody,
+  UpdateAvatarBody,
 } from "@workspace/api-zod";
 import { requireAuth, signToken } from "../middlewares/auth";
 
 const router: IRouter = Router();
+
+function formatUser(user: typeof usersTable.$inferSelect) {
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    avatarUrl: user.avatarUrl ?? null,
+    createdAt: user.createdAt,
+  };
+}
 
 router.post("/auth/register", async (req, res) => {
   const parsed = RegisterBody.safeParse(req.body);
@@ -36,10 +47,7 @@ router.post("/auth/register", async (req, res) => {
     .returning();
 
   const token = signToken({ userId: user.id, username: user.username });
-  res.status(201).json({
-    user: { id: user.id, username: user.username, email: user.email, createdAt: user.createdAt },
-    token,
-  });
+  res.status(201).json({ user: formatUser(user), token });
 });
 
 router.post("/auth/login", async (req, res) => {
@@ -68,10 +76,7 @@ router.post("/auth/login", async (req, res) => {
   }
 
   const token = signToken({ userId: user.id, username: user.username });
-  res.json({
-    user: { id: user.id, username: user.username, email: user.email, createdAt: user.createdAt },
-    token,
-  });
+  res.json({ user: formatUser(user), token });
 });
 
 router.post("/auth/logout", (_req, res) => {
@@ -91,12 +96,24 @@ router.get("/auth/me", requireAuth, async (req, res) => {
     return;
   }
 
-  res.json({
-    id: dbUser.id,
-    username: dbUser.username,
-    email: dbUser.email,
-    createdAt: dbUser.createdAt,
-  });
+  res.json(formatUser(dbUser));
+});
+
+router.patch("/auth/me/avatar", requireAuth, async (req, res) => {
+  const user = (req as any).user;
+  const parsed = UpdateAvatarBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(usersTable)
+    .set({ avatarUrl: parsed.data.avatarUrl })
+    .where(eq(usersTable.id, user.userId))
+    .returning();
+
+  res.json(formatUser(updated));
 });
 
 export default router;

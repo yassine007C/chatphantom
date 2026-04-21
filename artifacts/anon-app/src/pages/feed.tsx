@@ -1,15 +1,33 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useGetFeed, useCreatePost } from "@workspace/api-client-react";
 import { useCurrentUser, getAuthReq } from "@/lib/auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
-import { Send, User as UserIcon, Ghost } from "lucide-react";
+import { Send, User as UserIcon, Ghost, ImageIcon, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useImageUpload } from "@/hooks/useImageUpload";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function AvatarBubble({ username, avatarUrl, isAnonymous }: { username?: string | null; avatarUrl?: string | null; isAnonymous: boolean }) {
+  if (!isAnonymous && avatarUrl) {
+    return (
+      <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 flex-shrink-0">
+        <img src={`${BASE}/api/storage${avatarUrl}`} alt={username || ""} className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+  return (
+    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isAnonymous ? 'bg-primary/20 text-primary' : 'bg-blue-500/20 text-blue-400'}`}>
+      {isAnonymous ? <Ghost className="w-5 h-5" /> : <UserIcon className="w-5 h-5" />}
+    </div>
+  );
+}
 
 export default function Feed() {
   const { user } = useCurrentUser();
@@ -17,6 +35,9 @@ export default function Feed() {
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(true);
+  const [postImage, setPostImage] = useState<{ objectPath: string; previewUrl: string } | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const { uploadImage, isUploading } = useImageUpload();
 
   const { data, isLoading } = useGetFeed(
     { page: 1, limit: 50 },
@@ -28,6 +49,7 @@ export default function Feed() {
     mutation: {
       onSuccess: () => {
         setContent("");
+        setPostImage(null);
         queryClient.invalidateQueries({ queryKey: ["/api/feed"] });
         toast({ title: "Post published!", description: "Your thought is out in the wild." });
       },
@@ -39,8 +61,13 @@ export default function Feed() {
 
   const handlePost = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
-    createMutation.mutate({ data: { content, isAnonymous } });
+    if (!content.trim() && !postImage) return;
+    createMutation.mutate({ data: { content: content || " ", isAnonymous, imageUrl: postImage?.objectPath ?? undefined } as any });
+  };
+
+  const handleImageChange = async (file: File) => {
+    const result = await uploadImage(file);
+    if (result) setPostImage(result);
   };
 
   return (
@@ -50,10 +77,10 @@ export default function Feed() {
       </div>
 
       {user && (
-        <motion.form 
+        <motion.form
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          onSubmit={handlePost} 
+          onSubmit={handlePost}
           className="glass-card p-5 sm:p-6 rounded-3xl space-y-4 border-t border-t-white/10"
         >
           <Textarea
@@ -63,25 +90,56 @@ export default function Feed() {
             className="bg-black/20 border-white/10 rounded-2xl resize-none min-h-[100px] text-lg placeholder:text-muted-foreground/50 focus-visible:ring-primary/50"
             maxLength={1000}
           />
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center space-x-3 bg-white/5 py-2 px-4 rounded-full border border-white/5">
-              <Switch 
-                id="anonymous-mode" 
-                checked={isAnonymous} 
-                onCheckedChange={setIsAnonymous}
-                className="data-[state=checked]:bg-primary"
-              />
-              <Label htmlFor="anonymous-mode" className="flex items-center gap-2 cursor-pointer font-medium">
-                {isAnonymous ? (
-                  <><Ghost className="w-4 h-4 text-primary" /> Post Anonymously</>
-                ) : (
-                  <><UserIcon className="w-4 h-4 text-blue-400" /> Post as {user.username}</>
-                )}
-              </Label>
+
+          {/* Image preview */}
+          {postImage && (
+            <div className="relative inline-block">
+              <img src={postImage.previewUrl} alt="Attachment" className="max-h-48 rounded-xl border border-white/10 object-cover" />
+              <button
+                type="button"
+                onClick={() => setPostImage(null)}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-destructive rounded-full flex items-center justify-center"
+              >
+                <X className="w-3 h-3 text-white" />
+              </button>
             </div>
-            <Button 
-              type="submit" 
-              disabled={!content.trim() || createMutation.isPending}
+          )}
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center space-x-3 bg-white/5 py-2 px-4 rounded-full border border-white/5">
+                <Switch
+                  id="anonymous-mode"
+                  checked={isAnonymous}
+                  onCheckedChange={setIsAnonymous}
+                  className="data-[state=checked]:bg-primary"
+                />
+                <Label htmlFor="anonymous-mode" className="flex items-center gap-2 cursor-pointer font-medium">
+                  {isAnonymous ? (
+                    <><Ghost className="w-4 h-4 text-primary" /> Anonymously</>
+                  ) : (
+                    <><UserIcon className="w-4 h-4 text-blue-400" /> As {user.username}</>
+                  )}
+                </Label>
+              </div>
+              <label className="cursor-pointer">
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageChange(e.target.files[0])}
+                  disabled={isUploading}
+                />
+                <div className="flex items-center gap-1.5 py-2 px-3 rounded-full border border-white/10 bg-white/5 text-muted-foreground hover:text-white hover:bg-white/10 transition-colors text-sm">
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                  {isUploading ? "Uploading..." : "Image"}
+                </div>
+              </label>
+            </div>
+            <Button
+              type="submit"
+              disabled={(!content.trim() && !postImage) || createMutation.isPending || isUploading}
               className="w-full sm:w-auto rounded-full bg-white text-black hover:bg-white/90 font-semibold px-6"
             >
               {createMutation.isPending ? "Publishing..." : "Publish"}
@@ -112,9 +170,7 @@ export default function Feed() {
                 className="glass-card p-6 rounded-3xl flex flex-col group hover:border-white/20 transition-all"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${post.isAnonymous ? 'bg-primary/20 text-primary' : 'bg-blue-500/20 text-blue-400'}`}>
-                    {post.isAnonymous ? <Ghost className="w-5 h-5" /> : <UserIcon className="w-5 h-5" />}
-                  </div>
+                  <AvatarBubble username={post.username} avatarUrl={(post as any).avatarUrl} isAnonymous={post.isAnonymous} />
                   <div>
                     <p className="font-semibold text-white">
                       {post.isAnonymous ? 'Anonymous Phantom' : post.username}
@@ -124,9 +180,18 @@ export default function Feed() {
                     </p>
                   </div>
                 </div>
-                <p className="text-lg text-white/90 whitespace-pre-wrap leading-relaxed">
-                  {post.content}
-                </p>
+                {post.content.trim() && (
+                  <p className="text-lg text-white/90 whitespace-pre-wrap leading-relaxed mb-3">
+                    {post.content}
+                  </p>
+                )}
+                {(post as any).imageUrl && (
+                  <img
+                    src={`${BASE}/api/storage${(post as any).imageUrl}`}
+                    alt="Post image"
+                    className="rounded-2xl max-h-80 object-cover w-full border border-white/10"
+                  />
+                )}
               </motion.div>
             ))}
           </AnimatePresence>

@@ -6,10 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface UserInfo {
-  id: number;
-  username: string;
-  email: string;
-  avatarUrl?: string | null;
-  createdAt: Date;
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
 }

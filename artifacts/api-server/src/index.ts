@@ -23,6 +23,18 @@ async function runMigrations() {
       ALTER TABLE conversations
       ADD COLUMN IF NOT EXISTS anonymous_alias text NOT NULL DEFAULT 'Anonymous'
     `);
+    await client.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS avatar_url text
+    `);
+    await client.query(`
+      ALTER TABLE public_posts
+      ADD COLUMN IF NOT EXISTS image_url text
+    `);
+    await client.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS image_url text
+    `);
     logger.info("Migrations applied");
   } catch (err) {
     logger.error({ err }, "Migration failed");

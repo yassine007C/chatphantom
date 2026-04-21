@@ -9,17 +9,17 @@ const router: IRouter = Router();
 
 router.get("/users", async (_req, res) => {
   const users = await db
-    .select({ id: usersTable.id, username: usersTable.username, createdAt: usersTable.createdAt })
+    .select({ id: usersTable.id, username: usersTable.username, avatarUrl: usersTable.avatarUrl, createdAt: usersTable.createdAt })
     .from(usersTable)
     .orderBy(usersTable.username);
 
-  res.json({ users });
+  res.json({ users: users.map(u => ({ ...u, avatarUrl: u.avatarUrl ?? null })) });
 });
 
 router.get("/users/:username", async (req, res) => {
   const { username } = req.params;
   const [user] = await db
-    .select({ id: usersTable.id, username: usersTable.username, createdAt: usersTable.createdAt })
+    .select({ id: usersTable.id, username: usersTable.username, avatarUrl: usersTable.avatarUrl, createdAt: usersTable.createdAt })
     .from(usersTable)
     .where(eq(usersTable.username, username))
     .limit(1);
@@ -29,7 +29,7 @@ router.get("/users/:username", async (req, res) => {
     return;
   }
 
-  res.json(user);
+  res.json({ ...user, avatarUrl: user.avatarUrl ?? null });
 });
 
 router.post(
@@ -56,6 +56,7 @@ router.post(
 
     const guestSessionId = parsed.data.guestSessionId || `guest_${Date.now()}`;
     const body = filterContent(parsed.data.body);
+    const imageUrl = (parsed.data as any).imageUrl ?? null;
 
     let [conversation] = await db
       .select()
@@ -87,6 +88,7 @@ router.post(
       conversationId: conversation.id,
       senderId: null,
       body,
+      imageUrl,
       isRead: false,
     });
 

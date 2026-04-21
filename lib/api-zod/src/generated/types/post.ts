@@ -9,7 +9,9 @@
 export interface Post {
   id: number;
   content: string;
+  imageUrl?: string | null;
   isAnonymous: boolean;
   username?: string | null;
+  avatarUrl?: string | null;
   createdAt: Date;
 }

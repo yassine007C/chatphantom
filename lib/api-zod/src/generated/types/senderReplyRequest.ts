@@ -12,5 +12,6 @@ export interface SenderReplyRequest {
    * @maxLength 1000
    */
   body: string;
+  imageUrl?: string | null;
   guestSessionId: string;
 }

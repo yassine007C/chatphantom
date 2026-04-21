@@ -131,6 +131,7 @@ router.get("/inbox/:conversationId", requireAuth, async (req, res) => {
     id: m.id,
     conversationId: m.conversationId,
     body: m.body,
+    imageUrl: m.imageUrl ?? null,
     isRead: m.isRead,
     isFromOwner: m.senderId !== null,
     createdAt: m.createdAt,
@@ -189,11 +190,13 @@ router.post("/inbox/:conversationId/reply", requireAuth, async (req, res) => {
   }
 
   const body = filterContent(parsed.data.body);
+  const imageUrl = (parsed.data as any).imageUrl ?? null;
 
   await db.insert(messagesTable).values({
     conversationId: conv.id,
     senderId: user.userId,
     body,
+    imageUrl,
     isRead: true,
   });
 
