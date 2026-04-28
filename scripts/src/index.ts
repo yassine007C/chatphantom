@@ -1,8 +1,7 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-// @ts-ignore
-import { setupAuth } from "./auth"; // ملف معالجة تسجيل الدخول
+import { setupAuth } from "../../artifacts/anon-app/src/lib/auth";
 import { registerRoutes } from "./routes.js"; // ملف المسارات (API)
 
 const __filename = fileURLToPath(import.meta.url);
