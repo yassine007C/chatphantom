@@ -1,34 +1,23 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+// @ts-ignore
 import { setupAuth } from "../../artifacts/anon-app/src/lib/auth";
-import { registerRoutes } from "./routes.js"; // ملف المسارات (API)
+// استبدل السطر القديم بهذا السطر الذي يشير للمجلد الصحيح الذي وجدناه في بحثك
+// @ts-ignore
+import { router } from "../../artifacts/api-server/src/routes/index";
 
+const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// تأكد من استخدام الـ router الذي استوردته
+app.use("/api", router);
 
-// إعداد نظام التوثيق (Login/Sign Up)
+// إعداد المصادقة
 setupAuth(app);
 
-// تسجيل مسارات الـ API (مثل إرسال الرسائل المجهولة)
-registerRoutes(app);
-
-// خدمة ملفات الواجهة الأمامية بعد عمل Build
-const clientDistPath = path.resolve(__dirname, "../../artifacts/anon-app/dist");
-
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(clientDistPath));
-  
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(clientDistPath, "index.html"));
-  });
-}
-
-const port = process.env.PORT || 10000;
-app.listen(port, "0.0.0.0", () => {
-  console.log(`Server is running on port ${port}`);
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
