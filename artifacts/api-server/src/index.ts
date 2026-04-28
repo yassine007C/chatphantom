@@ -37,8 +37,8 @@ async function runMigrations() {
     `);
     logger.info("Migrations applied");
   } catch (err) {
-    logger.error({ err }, "Migration failed");
-    throw err;
+    console.error("🚨 Migration Error:", err);
+    process.exit(1);
   } finally {
     client.release();
   }
