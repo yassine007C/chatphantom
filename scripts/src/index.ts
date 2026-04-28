@@ -8,7 +8,7 @@ import { setupAuth } from "../../artifacts/anon-app/src/lib/auth";
 // @ts-ignore
 
 
-import router from "../../artifacts/api-server/src/routes/index";
+import { routes as router } from "../../artifacts/api-server/src/routes/index";
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
