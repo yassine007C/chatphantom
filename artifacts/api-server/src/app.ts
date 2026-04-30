@@ -31,4 +31,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
+
+app.get("/ping", (req, res) => res.send("pong"));
+
+app.use("/api", router);
+
+
 export default app;
