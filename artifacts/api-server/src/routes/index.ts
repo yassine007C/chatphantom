@@ -9,12 +9,13 @@ import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
-router.use(healthRouter);
-router.use(authRouter);
-router.use(feedRouter);
-router.use(usersRouter);
-router.use(inboxRouter);
-router.use(sentRouter);
-router.use(storageRouter);
+// أضف المسارات الفرعية هنا لتصبح الروابط واضحة
+router.use("/health", healthRouter);
+router.use("/auth", authRouter);
+router.use("/feed", feedRouter);
+router.use("/users", usersRouter);
+router.use("/inbox", inboxRouter);
+router.use("/sent", sentRouter);
+router.use("/storage", storageRouter);
 
 export default router;
