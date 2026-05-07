@@ -48,7 +48,7 @@ app.use(express.static(clientPath));
 
 // توجيه أي طلب غير معروف للـ index.html لدعم React Router
 // بدلاً من app.get("*", ...
-app.get("(.*)", (req, res) => {
+app.get("/{*path}", (req, res) => {
   if (!req.path.startsWith("/api")) {
     res.sendFile(path.join(clientPath, "index.html"));
   }
