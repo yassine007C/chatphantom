@@ -4,7 +4,12 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import path from "path";
-import express from "express";
+import { fileURLToPath } from "url"; // أضف هذا السطر
+
+// --- تعريف __dirname لنظام ES Modules ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// ---------------------------------------
 
 const app: Express = express();
 
@@ -27,28 +32,25 @@ app.use(
     },
   }),
 );
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// تأكد من عدم تكرار هذا السطر مرتين
 app.use("/api", router);
-
 
 app.get("/ping", (req, res) => res.send("pong"));
 
-app.use("/api", router);
-
+// مسار ملفات الواجهة (Frontend)
 const clientPath = path.join(__dirname, "../../anon-app/dist");
 app.use(express.static(clientPath));
 
-// توجيه أي طلب غير معروف للـ index.html (ضروري لتطبيقات SPA مثل React)
+// توجيه أي طلب غير معروف للـ index.html لدعم React Router
 app.get("*", (req, res) => {
   if (!req.path.startsWith("/api")) {
     res.sendFile(path.join(clientPath, "index.html"));
   }
 });
-
-
-
 
 export default app;
