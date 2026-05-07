@@ -21,7 +21,7 @@ function formatUser(user: typeof usersTable.$inferSelect) {
   };
 }
 
-router.post("/auth/register", async (req, res) => {
+router.post("/register", async (req, res) => {
   const parsed = RegisterBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues[0]?.message || "Invalid input" });
@@ -50,7 +50,7 @@ router.post("/auth/register", async (req, res) => {
   res.status(201).json({ user: formatUser(user), token });
 });
 
-router.post("/auth/login", async (req, res) => {
+router.post("/login", async (req, res) => {
   const parsed = LoginBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid input" });
@@ -79,11 +79,11 @@ router.post("/auth/login", async (req, res) => {
   res.json({ user: formatUser(user), token });
 });
 
-router.post("/auth/logout", (_req, res) => {
+router.post("/logout", (_req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-router.get("/auth/me", requireAuth, async (req, res) => {
+router.get("/me", requireAuth, async (req, res) => {
   const user = (req as any).user;
   const [dbUser] = await db
     .select()
@@ -99,7 +99,7 @@ router.get("/auth/me", requireAuth, async (req, res) => {
   res.json(formatUser(dbUser));
 });
 
-router.patch("/auth/me/avatar", requireAuth, async (req, res) => {
+router.patch("/me/avatar", requireAuth, async (req, res) => {
   const user = (req as any).user;
   const parsed = UpdateAvatarBody.safeParse(req.body);
   if (!parsed.success) {
