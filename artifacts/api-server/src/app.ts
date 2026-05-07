@@ -47,7 +47,8 @@ const clientPath = path.join(__dirname, "../../anon-app/dist");
 app.use(express.static(clientPath));
 
 // توجيه أي طلب غير معروف للـ index.html لدعم React Router
-app.get("*", (req, res) => {
+// بدلاً من app.get("*", ...
+app.get("(.*)", (req, res) => {
   if (!req.path.startsWith("/api")) {
     res.sendFile(path.join(clientPath, "index.html"));
   }
