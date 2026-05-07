@@ -22,32 +22,29 @@ function formatUser(user: typeof usersTable.$inferSelect) {
 }
 
 router.post("/register", async (req, res) => {
-  const parsed = RegisterBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.issues[0]?.message || "Invalid input" });
-    return;
+  try {
+    const parsed = RegisterBody.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0]?.message || "Invalid input" });
+    }
+    const { username, email, password } = parsed.data;
+
+    // ... كود فحص المستخدم الموجود مسبقاً ...
+
+    // تأكد من استخدام bcryptjs هنا
+    const passwordHash = await bcrypt.hash(password, 12);
+    
+    const [user] = await db
+      .insert(usersTable)
+      .values({ username, email, passwordHash })
+      .returning();
+
+    const token = signToken({ userId: user.id, username: user.username });
+    res.status(201).json({ user: formatUser(user), token });
+  } catch (error: any) {
+    console.error("REGISTRATION ERROR:", error); // هذا سيظهر في سجلات Render
+    res.status(500).json({ error: error.message || "Internal Server Error" });
   }
-  const { username, email, password } = parsed.data;
-
-  const existing = await db
-    .select({ id: usersTable.id })
-    .from(usersTable)
-    .where(or(eq(usersTable.username, username), eq(usersTable.email, email)))
-    .limit(1);
-
-  if (existing.length > 0) {
-    res.status(409).json({ error: "Username or email already taken" });
-    return;
-  }
-
-  const passwordHash = await bcrypt.hash(password, 12);
-  const [user] = await db
-    .insert(usersTable)
-    .values({ username, email, passwordHash })
-    .returning();
-
-  const token = signToken({ userId: user.id, username: user.username });
-  res.status(201).json({ user: formatUser(user), token });
 });
 
 router.post("/login", async (req, res) => {
