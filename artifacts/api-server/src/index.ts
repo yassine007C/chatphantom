@@ -19,13 +19,15 @@ if (Number.isNaN(port) || port <= 0) {
 async function runMigrations() {
   const client = await pool.connect();
   try {
-    // 1. إنشاء الجداول الأساسية إذا لم تكن موجودة لمنع خطأ الـ Relation does not exist
+    // 1. إنشاء الجداول الأساسية بالهيكلية المتوافقة تماماً مع Drizzle
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username TEXT UNIQUE,
-        password TEXT,
-        avatar_url TEXT
+        password_hash TEXT,
+        email TEXT,
+        avatar_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
       CREATE TABLE IF NOT EXISTS conversations (
@@ -48,15 +50,16 @@ async function runMigrations() {
       );
     `);
 
-    // 2. تطبيق التعديلات (Migrations) على الأعمدة
+    // 2. تطبيق التعديلات والأعمدة الناقصة (في حال كان الجدول منشأً قديمًا بهيكلية ناقصة)
+    await client.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS email text;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash text;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at timestamp DEFAULT now();
+    `);
+
     await client.query(`
       ALTER TABLE conversations 
       ADD COLUMN IF NOT EXISTS anonymous_alias text NOT NULL DEFAULT 'Anonymous'
-    `);
-    
-    await client.query(`
-      ALTER TABLE users 
-      ADD COLUMN IF NOT EXISTS avatar_url text
     `);
     
     await client.query(`
@@ -69,9 +72,8 @@ async function runMigrations() {
       ADD COLUMN IF NOT EXISTS image_url text
     `);
 
-    logger.info("✅ Migrations applied successfully");
+    logger.info("✅ Migrations and adjustments applied successfully");
   } catch (err) {
-    // استخدمنا console.error هنا لضمان ظهور الخطأ في Render قبل خروج السيرفر
     console.error("🚨 Migration Error Details:", err);
     process.exit(1);
   } finally {
@@ -79,7 +81,7 @@ async function runMigrations() {
   }
 }
 
-// البدء في تشغيل العمليات
+// البدء في تشغيل السيرفر بعد التأكد من تعديل قاعدة البيانات
 runMigrations().then(() => {
   app.listen(port, "0.0.0.0", () => {
     logger.info({ port }, "🚀 Server listening and ready!");
