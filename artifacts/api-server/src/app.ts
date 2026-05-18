@@ -48,7 +48,7 @@ app.use(express.static(clientPath));
 
 // ✅ التعديل الثاني: تصحيح صيغة الـ Wildcard إلى "*" لتدعم React Router بشكل صحيح
 // ✅ الصيغة الرسمية المتوافقة 100% مع Express 5 لالتقاط جميع المسارات (Catch-All)
-app.get("/:any*", (req, res) => {
+app.get(/.*/, (req, res) => {
   if (!req.path.startsWith("/api")) {
     res.sendFile(path.join(clientPath, "index.html"));
   }
