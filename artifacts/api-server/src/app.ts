@@ -38,7 +38,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // تأكد من عدم تكرار هذا السطر مرتين
-app.use("/api", router);
+router.use("/", feedRouter);
 
 app.get("/ping", (req, res) => res.send("pong"));
 
