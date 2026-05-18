@@ -12,7 +12,6 @@ const router: IRouter = Router();
 // أضف المسارات الفرعية هنا لتصبح الروابط واضحة
 router.use("/health", healthRouter);
 router.use("/auth", authRouter);
-router.use("/feed", feedRouter);
 router.use("/users", usersRouter);
 router.use("/inbox", inboxRouter);
 router.use("/sent", sentRouter);
