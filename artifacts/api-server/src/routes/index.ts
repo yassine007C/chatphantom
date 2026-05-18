@@ -17,5 +17,6 @@ router.use("/users", usersRouter);
 router.use("/inbox", inboxRouter);
 router.use("/sent", sentRouter);
 router.use("/storage", storageRouter);
+router.use("/", feedRouter);
 
 export default router;
