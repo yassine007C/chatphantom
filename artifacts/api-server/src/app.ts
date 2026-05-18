@@ -1,10 +1,10 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import router from "./routes";
+import router from "./routes"; // الموجه الرئيسي الذي يجمع كل المسارات
 import { logger } from "./lib/logger";
 import path from "path";
-import { fileURLToPath } from "url"; // أضف هذا السطر
+import { fileURLToPath } from "url";
 
 // --- تعريف __dirname لنظام ES Modules ---
 const __filename = fileURLToPath(import.meta.url);
@@ -37,8 +37,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// تأكد من عدم تكرار هذا السطر مرتين
-router.use("/", feedRouter);
+// ✅ التعديل الأول: تفعيل وتثبيت الموجه الرئيسي لـ /api
+app.use("/api", router);
 
 app.get("/ping", (req, res) => res.send("pong"));
 
@@ -46,9 +46,8 @@ app.get("/ping", (req, res) => res.send("pong"));
 const clientPath = path.join(__dirname, "../../anon-app/dist");
 app.use(express.static(clientPath));
 
-// توجيه أي طلب غير معروف للـ index.html لدعم React Router
-// بدلاً من app.get("*", ...
-app.get("/{*path}", (req, res) => {
+// ✅ التعديل الثاني: تصحيح صيغة الـ Wildcard إلى "*" لتدعم React Router بشكل صحيح
+app.get("*", (req, res) => {
   if (!req.path.startsWith("/api")) {
     res.sendFile(path.join(clientPath, "index.html"));
   }
