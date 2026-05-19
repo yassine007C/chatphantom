@@ -7,30 +7,26 @@ import { filterContent } from "../lib/contentFilter";
 
 const router: IRouter = Router();
 
+// مسار عدد الرسائل غير المقروءة (تم تحسينه ليكون استعلاماً واحداً سريعا جداً)
 router.get("/inbox/unread-count", requireAuth, async (req, res) => {
   const user = (req as any).user;
 
-  const convos = await db
-    .select({ id: conversationsTable.id })
-    .from(conversationsTable)
-    .where(eq(conversationsTable.ownerId, user.userId));
-
-  if (convos.length === 0) {
-    res.json({ count: 0 });
-    return;
-  }
-
-  const convoIds = convos.map((c) => c.id);
   const [{ cnt }] = await db
     .select({ cnt: count() })
     .from(messagesTable)
+    .innerJoin(conversationsTable, eq(messagesTable.conversationId, conversationsTable.id))
     .where(
-      sql`${messagesTable.conversationId} = ANY(${sql.raw(`ARRAY[${convoIds.join(",")}]`)}) AND ${messagesTable.isRead} = false AND ${messagesTable.senderId} IS NULL`
+      and(
+        eq(conversationsTable.ownerId, user.userId),
+        eq(messagesTable.isRead, false),
+        sql`${messagesTable.senderId} IS NULL`
+      )
     );
 
   res.json({ count: Number(cnt) });
 });
 
+// مسار صندوق الوارد (تم حل مشكلة الاختناق N+1 عبر التسلسل)
 router.get("/inbox", requireAuth, async (req, res) => {
   const user = (req as any).user;
 
@@ -40,37 +36,38 @@ router.get("/inbox", requireAuth, async (req, res) => {
     .where(eq(conversationsTable.ownerId, user.userId))
     .orderBy(desc(conversationsTable.createdAt));
 
-  const results = await Promise.all(
-    conversations.map(async (conv) => {
-      const [last] = await db
-        .select()
-        .from(messagesTable)
-        .where(eq(messagesTable.conversationId, conv.id))
-        .orderBy(desc(messagesTable.createdAt))
-        .limit(1);
+  const results = [];
+  
+  // استخدام for...of بدلاً من Promise.all لمنع إرهاق قاعدة البيانات
+  for (const conv of conversations) {
+    const [last] = await db
+      .select()
+      .from(messagesTable)
+      .where(eq(messagesTable.conversationId, conv.id))
+      .orderBy(desc(messagesTable.createdAt))
+      .limit(1);
 
-      const [{ unread }] = await db
-        .select({ unread: count() })
-        .from(messagesTable)
-        .where(
-          and(
-            eq(messagesTable.conversationId, conv.id),
-            eq(messagesTable.isRead, false),
-            sql`${messagesTable.senderId} IS NULL`
-          )
-        );
+    const [{ unread }] = await db
+      .select({ unread: count() })
+      .from(messagesTable)
+      .where(
+        and(
+          eq(messagesTable.conversationId, conv.id),
+          eq(messagesTable.isRead, false),
+          sql`${messagesTable.senderId} IS NULL`
+        )
+      );
 
-      return {
-        id: conv.id,
-        guestSessionId: conv.guestSessionId,
-        anonymousAlias: conv.anonymousAlias,
-        lastMessage: last?.body ?? null,
-        lastMessageAt: last?.createdAt ?? null,
-        unreadCount: Number(unread),
-        createdAt: conv.createdAt,
-      };
-    })
-  );
+    results.push({
+      id: conv.id,
+      guestSessionId: conv.guestSessionId,
+      anonymousAlias: conv.anonymousAlias,
+      lastMessage: last?.body ?? null,
+      lastMessageAt: last?.createdAt ?? null,
+      unreadCount: Number(unread),
+      createdAt: conv.createdAt,
+    });
+  }
 
   res.json({ conversations: results });
 });
