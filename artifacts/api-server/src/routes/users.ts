@@ -7,11 +7,18 @@ import { filterContent } from "../lib/contentFilter";
 
 const router: IRouter = Router();
 
+// مسار جلب قائمة المستخدمين (تمت إضافة حماية Limit لتجنب اختناق الذاكرة)
 router.get("/users", async (_req, res) => {
   const users = await db
-    .select({ id: usersTable.id, username: usersTable.username, avatarUrl: usersTable.avatarUrl, createdAt: usersTable.createdAt })
+    .select({ 
+      id: usersTable.id, 
+      username: usersTable.username, 
+      avatarUrl: usersTable.avatarUrl, 
+      createdAt: usersTable.createdAt 
+    })
     .from(usersTable)
-    .orderBy(usersTable.username);
+    .orderBy(usersTable.username)
+    .limit(100); // 👈 سقف آمن لمنع تعليق السيرفر
 
   res.json({ users: users.map(u => ({ ...u, avatarUrl: u.avatarUrl ?? null })) });
 });
@@ -19,7 +26,12 @@ router.get("/users", async (_req, res) => {
 router.get("/users/:username", async (req, res) => {
   const { username } = req.params;
   const [user] = await db
-    .select({ id: usersTable.id, username: usersTable.username, avatarUrl: usersTable.avatarUrl, createdAt: usersTable.createdAt })
+    .select({ 
+      id: usersTable.id, 
+      username: usersTable.username, 
+      avatarUrl: usersTable.avatarUrl, 
+      createdAt: usersTable.createdAt 
+    })
     .from(usersTable)
     .where(eq(usersTable.username, username))
     .limit(1);
