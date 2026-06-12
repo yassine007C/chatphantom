@@ -22,7 +22,5 @@ router.use("/storage", storageRouter);
 // تم حذف السطر المكرر القديم لإنهاء مشكلة التضارب والـ 404 تماماً
 router.use("/", feedRouter);
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
-});
+
 export default router;
