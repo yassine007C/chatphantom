@@ -21,4 +21,11 @@ router.use("/storage", storageRouter);
 // تم حذف السطر المكرر القديم لإنهاء مشكلة التضارب والـ 404 تماماً
 router.use("/", feedRouter);
 
+// هذا السطر يخبر Express أنه إذا لم يجد أي مسار API متوافق، 
+// يجب أن يعيد ملف index.html الخاص بالـ Frontend ليقوم هو بالتوجيه داخلياً
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html')); 
+  // 👆 تأكد من تعديل المسار ليتوافق مع مجلد الـ build/dist الخاص بالـ frontend لديك
+});
+
 export default router;
