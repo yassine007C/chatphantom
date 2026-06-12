@@ -83,6 +83,12 @@ async function runMigrations() {
 
 // البدء في تشغيل السيرفر بعد التأكد من تعديل قاعدة البيانات
 runMigrations().then(() => {
+
+  app.get(/.*/, (req, res) => {
+    // جرب هذا المسار، وإذا استمرت الصفحة البيضاء، قد نحتاج لتعديله إلى '../../../frontend/dist/index.html' تبعاً لموقع مجلد الـ frontend لديك
+    res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+  });
+  
   app.listen(port, "0.0.0.0", () => {
     logger.info({ port }, "🚀 Server listening and ready!");
   });
@@ -90,7 +96,4 @@ runMigrations().then(() => {
   console.error("🚨 Failed to start application:", err);
   process.exit(1);
 });
-// استبدل السطر القديم بهذا السطر الذي يستخدم الـ Regex الصريح
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
-});
+
