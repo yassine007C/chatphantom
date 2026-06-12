@@ -9,15 +9,16 @@ import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
-// 1. المسارات الفرعية المنظمة ببادئة صريحة
+// 1. مسارات فرعية لا تحتوي على البادئة داخل ملفاتها الخاصة
 router.use("/health", healthRouter);
 router.use("/auth", authRouter);
 router.use("/sent", sentRouter);
 router.use("/storage", storageRouter);
 
-// 2. إصلاح التضارب عبر ربط المسارات التي تحتوي البادئة داخلها على الجذع الرئيسي "/"
-router.use("/", usersRouter); // 👈 تم التعديل لمنع تكرار /users/users
-router.use("/", inboxRouter); // 👈 تم التعديل لمنع تكرار /inbox/inbox في حال وُجد
+// 2. مسارات تحتوي بالفعل على البادئة (مثل /inbox و /users) داخل الكود الخاص بها
+// نربطها هنا على الجذع "/" مباشرة لمنع التكرار المسبب للـ 404 (مثل /inbox/inbox)
+router.use("/", usersRouter);  // لتشغيل الدليل /directory أو /users
+router.use("/", inboxRouter);  // لتشغيل صندوق الوارد /inbox فوراً 🎉
 router.use("/", feedRouter);
 
 export default router;
