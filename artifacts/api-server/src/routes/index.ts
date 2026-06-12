@@ -7,18 +7,18 @@ import inboxRouter from "./inbox";
 import sentRouter from "./sent";
 import storageRouter from "./storage";
 
+
 const router: IRouter = Router();
 
-// 1. مسارات فرعية لا تحتوي على البادئة داخل ملفاتها الخاصة
+// 1. مسارات فرعية منسقة
 router.use("/health", healthRouter);
 router.use("/auth", authRouter);
-router.use("/sent", sentRouter);
 router.use("/storage", storageRouter);
 
-// 2. مسارات تحتوي بالفعل على البادئة (مثل /inbox و /users) داخل الكود الخاص بها
-// نربطها هنا على الجذع "/" مباشرة لمنع التكرار المسبب للـ 404 (مثل /inbox/inbox)
-router.use("/", usersRouter);  // لتشغيل الدليل /directory أو /users
-router.use("/", inboxRouter);  // لتشغيل صندوق الوارد /inbox فوراً 🎉
+// 2. ربط المسارات التي تحتوي البادئة داخلها على الجذع الرئيسي "/" لمنع التكرار (404)
+router.use("/", usersRouter);
+router.use("/", inboxRouter);
+router.use("/", sentRouter); // 👈 انقل هذا السطر إلى هنا لمنع تكرار /sent/sent
 router.use("/", feedRouter);
 
 export default router;
