@@ -90,4 +90,6 @@ runMigrations().then(() => {
   console.error("🚨 Failed to start application:", err);
   process.exit(1);
 });
-
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+});
