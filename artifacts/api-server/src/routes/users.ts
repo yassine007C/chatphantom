@@ -1,15 +1,16 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable, conversationsTable, messagesTable } from "@workspace/db";
-import { eq, and, count } from "drizzle-orm";
+import { db, usersTable, conversationsTable, messagesTable, postsTable } from "@workspace/db";
+import { eq, or } from "drizzle-orm"; // قمنا بإضافة or للحذف الشامل
 import { SendAnonymousMessageBody } from "@workspace/api-zod";
 import { rateLimit } from "../middlewares/rateLimit";
 import { filterContent } from "../lib/contentFilter";
-// 🟢
-import { Router, type Request, type Response } from "express";
-import { db } from "../lib/db"; 
-// 🟢 تأكد من استدعاء جميع الجداول المرتبطة هنا بناءً على الأسماء في ملف schema الخاص بك
-import { users, posts, messages } from "../lib/db/schema"; 
-import { eq, or } from "drizzle-orm"; // نحتاج 'or' لحذف الرسائل الصادرة والواردة
+
+const router: IRouter = Router();
+
+
+
+
+
 
 const router = Router();
 
