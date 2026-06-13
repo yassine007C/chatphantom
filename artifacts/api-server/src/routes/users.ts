@@ -4,6 +4,14 @@ import { eq, and, count } from "drizzle-orm";
 import { SendAnonymousMessageBody } from "@workspace/api-zod";
 import { rateLimit } from "../middlewares/rateLimit";
 import { filterContent } from "../lib/contentFilter";
+// 🟢
+import { Router, type Request, type Response } from "express";
+import { db } from "../lib/db"; 
+// 🟢 تأكد من استدعاء جميع الجداول المرتبطة هنا بناءً على الأسماء في ملف schema الخاص بك
+import { users, posts, messages } from "../lib/db/schema"; 
+import { eq, or } from "drizzle-orm"; // نحتاج 'or' لحذف الرسائل الصادرة والواردة
+
+const router = Router();
 
 const router: IRouter = Router();
 
@@ -107,5 +115,37 @@ router.post(
     res.status(201).json({ message: "Message sent anonymously" });
   }
 );
+
+
+
+router.delete("/users/:id", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.params.id;
+
+    // 1. مسح جميع منشورات المستخدم (Posts)
+    // (استبدل 'authorId' أو 'userId' بالاسم الموجود لديك في جدول المنشورات)
+    await db.delete(posts).where(eq(posts.authorId, userId));
+
+    // 2. مسح جميع رسائل المستخدم (Messages) سواء كان هو المرسل أو المستقبل
+    // (استبدل 'senderId' و 'receiverId' بالأسماء الموجودة لديك في جدول الرسائل)
+    await db.delete(messages).where(
+      or(
+        eq(messages.senderId, userId),
+        eq(messages.receiverId, userId)
+      )
+    );
+
+    // 3. أخيراً: مسح حساب المستخدم نفسه بعد تنظيف كل بياناته
+    await db.delete(users).where(eq(users.id, userId));
+
+    res.status(200).json({ 
+      message: "تم مسح المستخدم بنجاح مع كافة منشوراته ورسائله!" 
+    });
+
+  } catch (error) {
+    console.error("خطأ أثناء حذف المستخدم وبياناته:", error);
+    res.status(500).json({ error: "حدث خطأ داخلي أثناء محاولة الحذف الشامل" });
+  }
+});
 
 export default router;
