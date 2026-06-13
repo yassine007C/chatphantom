@@ -1,104 +1,93 @@
-import { Router, type IRouter, type Request, type Response } from "express";
-import { Readable } from "stream";
-import {
-  RequestUploadUrlBody,
-  RequestUploadUrlResponse,
-} from "@workspace/api-zod";
-import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
-import { ObjectPermission } from "../lib/objectAcl";
+import { Router, type Request, type Response } from "express";
+import fs from "fs";
+import path from "path";
+import { RequestUploadUrlBody } from "@workspace/api-zod";
 
-const router: IRouter = Router();
-const objectStorageService = new ObjectStorageService();
+const router = Router();
 
-/**
- * POST /uploads/request-url
- */
-router.post("/uploads/request-url", async (req: Request, res: Response) => {
-  const parsed = RequestUploadUrlBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Missing or invalid required fields" });
-    return;
-  }
+// إنشاء مجلد الرفع داخل السيرفر تلقائياً إذا لم يكن موجوداً
+const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
+// 1. بديل سحابة Replit: توليد رابط رفع داخلي وهمي
+router.post("/uploads/request-url", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, size, contentType } = parsed.data;
-
-    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-    const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
-
-    res.json(
-      RequestUploadUrlResponse.parse({
-        uploadURL,
-        objectPath,
-        metadata: { name, size, contentType },
-      }),
-    );
-  } catch (error) {
-    req.log.error({ err: error }, "Error generating upload URL");
-    res.status(500).json({ error: "Failed to generate upload URL" });
-  }
-});
-
-/**
- * GET /public-objects/*filePath
- * (تم إرجاع النجمة لكي تتوافق مع التحديث الأخير لـ Express)
- */
-router.get("/public-objects/*filePath", async (req: Request, res: Response) => {
-  try {
-    const raw = req.params.filePath;
-    const filePath = Array.isArray(raw) ? raw.join("/") : raw;
-    const file = await objectStorageService.searchPublicObject(filePath);
-    if (!file) {
-      res.status(404).json({ error: "File not found" });
+    const parsed = RequestUploadUrlBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid data" });
       return;
     }
+    const { name, size, contentType } = parsed.data;
 
-    const response = await objectStorageService.downloadObject(file);
+    // توليد اسم فريد للصورة لمنع التكرار
+    const uniqueName = Date.now() + "-" + name.replace(/[^a-zA-Z0-9.]/g, "");
 
-    res.status(response.status);
-    response.headers.forEach((value, key) => res.setHeader(key, value));
+    // بناء رابط ليعود المتصفح ويرفع الصورة إلى سيرفرنا بدلاً من ريبليت
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers.host;
+    const uploadURL = `${protocol}://${host}/api/storage/local-upload/${uniqueName}`;
 
-    if (response.body) {
-      const nodeStream = Readable.fromWeb(response.body as ReadableStream<Uint8Array>);
-      nodeStream.pipe(res);
-    } else {
-      res.end();
-    }
+    const objectPath = `/objects/${uniqueName}`;
+
+    res.json({
+      uploadURL,
+      objectPath,
+      metadata: { name, size, contentType },
+    });
   } catch (error) {
-    req.log.error({ err: error }, "Error serving public object");
-    res.status(500).json({ error: "Failed to serve public object" });
+    res.status(500).json({ error: "Failed to generate URL" });
   }
 });
 
-/**
- * GET /objects/*path
- */
-router.get("/objects/*path", async (req: Request, res: Response) => {
+// 2. المسار الجديد لاستقبال الصورة المرفوعة وحفظها
+router.put("/local-upload/:filename", (req: Request, res: Response) => {
+  const filePath = path.join(UPLOADS_DIR, req.params.filename);
+  const writeStream = fs.createWriteStream(filePath);
+
+  req.pipe(writeStream);
+
+  req.on("end", () => {
+    res.status(200).send("Uploaded successfully");
+  });
+  req.on("error", () => {
+    res.status(500).send("Error saving file");
+  });
+});
+
+// 3. عرض الصور (لكي تظهر في البروفايل والمنشورات)
+router.get("/objects/*path", (req: Request, res: Response): void => {
   try {
     const raw = req.params.path;
     const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
-    const objectPath = `/objects/${wildcardPath}`;
-    const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
+    const cleanPath = wildcardPath.replace(/^objects\//, ""); 
+    const filePath = path.join(UPLOADS_DIR, cleanPath);
 
-    const response = await objectStorageService.downloadObject(objectFile);
-
-    res.status(response.status);
-    response.headers.forEach((value, key) => res.setHeader(key, value));
-
-    if (response.body) {
-      const nodeStream = Readable.fromWeb(response.body as ReadableStream<Uint8Array>);
-      nodeStream.pipe(res);
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
     } else {
-      res.end();
+      res.status(404).json({ error: "Not found" });
     }
   } catch (error) {
-    if (error instanceof ObjectNotFoundError) {
-      req.log.warn({ err: error }, "Object not found");
-      res.status(404).json({ error: "Object not found" });
-      return;
+    res.status(500).json({ error: "Error serving file" });
+  }
+});
+
+// 4. عرض الصور العامة
+router.get("/public-objects/*filePath", (req: Request, res: Response): void => {
+  try {
+    const raw = req.params.filePath;
+    const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
+    const filePath = path.join(UPLOADS_DIR, wildcardPath);
+
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ error: "Not found" });
     }
-    req.log.error({ err: error }, "Error serving object");
-    res.status(500).json({ error: "Failed to serve object" });
+  } catch (error) {
+     res.status(500).json({ error: "Error" });
   }
 });
 
