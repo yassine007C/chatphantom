@@ -12,7 +12,6 @@ const objectStorageService = new ObjectStorageService();
 
 /**
  * POST /uploads/request-url
- * (تم حذف /storage لمنع التكرار /storage/storage)
  */
 router.post("/uploads/request-url", async (req: Request, res: Response) => {
   const parsed = RequestUploadUrlBody.safeParse(req.body);
@@ -41,10 +40,10 @@ router.post("/uploads/request-url", async (req: Request, res: Response) => {
 });
 
 /**
- * GET /public-objects/:filePath(.*)
- * تم تعديل صياغة المسار ليتوافق مع Express 5
+ * GET /public-objects/*filePath
+ * (تم إرجاع النجمة لكي تتوافق مع التحديث الأخير لـ Express)
  */
-router.get("/public-objects/:filePath(.*)", async (req: Request, res: Response) => {
+router.get("/public-objects/*filePath", async (req: Request, res: Response) => {
   try {
     const raw = req.params.filePath;
     const filePath = Array.isArray(raw) ? raw.join("/") : raw;
@@ -72,9 +71,9 @@ router.get("/public-objects/:filePath(.*)", async (req: Request, res: Response) 
 });
 
 /**
- * GET /objects/:path(.*)
+ * GET /objects/*path
  */
-router.get("/objects/:path(.*)", async (req: Request, res: Response) => {
+router.get("/objects/*path", async (req: Request, res: Response) => {
   try {
     const raw = req.params.path;
     const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
