@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, usersTable, conversationsTable, messagesTable, postsTable } from "@workspace/db";
+import { db, usersTable, conversationsTable, messagesTable, posts } from "@workspace/db";
 import { eq, or, and, count } from "drizzle-orm";
 import { SendAnonymousMessageBody } from "@workspace/api-zod";
 import { rateLimit } from "../middlewares/rateLimit";
