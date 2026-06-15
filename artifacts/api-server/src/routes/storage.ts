@@ -8,7 +8,7 @@ const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || "your_cloud_name";
 const UPLOAD_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET || "your_preset_name";
 
 /**
- * 1. توليد رابط رفع داخلي وهمي (للحفاظ على توافق الفرونت إند الحالي)
+ * 1. توليد رابط رفع داخلي وهمي
  */
 router.post("/uploads/request-url", async (req: Request, res: Response): Promise<void> => {
   try {
@@ -19,13 +19,12 @@ router.post("/uploads/request-url", async (req: Request, res: Response): Promise
     }
     const { name, size, contentType } = parsed.data;
 
-    // توليد معرف فريد للصورة
+    // توليد معرف فريد للصورة (بدون علامات مائلة ليتوافق مع المسار الجديد)
     const uniqueId = "img_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
 
     const protocol = req.headers['x-forwarded-proto'] || req.protocol;
     const host = req.headers.host;
     
-    // المتصفح سيرسل الصورة إلى سيرفرنا أولاً عبر هذا الرابط لتجنب تعديل كود الـ Frontend
     const uploadURL = `${protocol}://${host}/api/storage/local-upload/${uniqueId}`;
     const objectPath = `/objects/${uniqueId}`; 
 
@@ -40,12 +39,12 @@ router.post("/uploads/request-url", async (req: Request, res: Response): Promise
 });
 
 /**
- * 2. استقبال الصورة كـ Stream وتحويلها فوراً إلى Cloudinary دون لمس القرص الصلب
+ * 2. استقبال الصورة ورفعها مباشرة إلى Cloudinary
+ * 🟢 تم تصحيح المسار هنا إلى التعيين القياسي لـ Express (:publicId)
  */
-router.put("/local-upload/*publicId", async (req: Request, res: Response): Promise<void> => {
+router.put("/local-upload/:publicId", async (req: Request, res: Response): Promise<void> => {
   try {
-    const raw = req.params.publicId;
-    const publicId = Array.isArray(raw) ? raw.join("/") : raw;
+    const publicId = req.params.publicId;
     const chunks: any[] = [];
 
     req.on("data", (chunk) => chunks.push(chunk));
@@ -53,13 +52,12 @@ router.put("/local-upload/*publicId", async (req: Request, res: Response): Promi
       try {
         const buffer = Buffer.concat(chunks);
         
-        // تحويل البيانات الثنائية (Binary) إلى صيغة Base64 المطلوبة لـ Cloudinary API
+        // تحويل الصورة إلى Base64 Data URI
         const base64Data = buffer.toString("base64");
         const fileDataUri = `data:${req.headers["content-type"] || "image/jpeg"};base64,${base64Data}`;
 
         const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
         
-        // الرفع عبر الـ REST API الافتراضي
         const response = await fetch(cloudinaryUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -90,11 +88,10 @@ router.put("/local-upload/*publicId", async (req: Request, res: Response): Promi
 });
 
 /**
- * 3. عرض الصور وعمل تحويل (Redirect) مباشر وصريح إلى رابط كلوديناري الدائم
+ * 3. عرض واستدعاء الصور عبر تحويلها إلى رابط Cloudinary الدائم
  */
-router.get("/objects/*publicId", (req: Request, res: Response): void => {
-  const raw = req.params.publicId;
-  const publicId = Array.isArray(raw) ? raw.join("/") : raw;
+router.get("/objects/:publicId", (req: Request, res: Response): void => {
+  const publicId = req.params.publicId;
   const cloudImageUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${publicId}`;
   res.redirect(cloudImageUrl);
 });
@@ -102,9 +99,8 @@ router.get("/objects/*publicId", (req: Request, res: Response): void => {
 /**
  * 4. عرض الصور العامة
  */
-router.get("/public-objects/*publicId", (req: Request, res: Response): void => {
-  const raw = req.params.publicId;
-  const publicId = Array.isArray(raw) ? raw.join("/") : raw;
+router.get("/public-objects/:publicId", (req: Request, res: Response): void => {
+  const publicId = req.params.publicId;
   const cloudImageUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${publicId}`;
   res.redirect(cloudImageUrl);
 });
