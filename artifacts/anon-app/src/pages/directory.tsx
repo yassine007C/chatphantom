@@ -35,8 +35,20 @@ export default function Directory() {
                 className="glass-card p-5 rounded-2xl flex items-center justify-between group hover:bg-white/10 hover:border-primary/50 transition-all cursor-pointer block"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center border border-white/10">
-                    <UserIcon className="w-5 h-5 text-white/80" />
+                  {/* 🌟 التعديل هنا: غلاف دائري يحتوي على صورة البروفايل */}
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center border border-white/10 overflow-hidden shrink-0">
+                    <img 
+                      src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.username}&background=random`} 
+                      alt={user.username}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // في حال فشل تحميل الصورة، نعرض الأيقونة الافتراضية
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement?.classList.add('flex', 'items-center', 'justify-center');
+                      }}
+                    />
+                    {/* أيقونة بديلة تظهر فقط إذا فشل تحميل الصورة تماماً */}
+                    <UserIcon className="w-5 h-5 text-white/80 hidden fallback-icon" />
                   </div>
                   <div>
                     <p className="font-semibold text-white group-hover:text-primary transition-colors">@{user.username}</p>
