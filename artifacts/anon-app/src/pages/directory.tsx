@@ -1,7 +1,7 @@
 import { useGetUsers } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Users, ChevronRight, User as UserIcon } from "lucide-react";
+import { Users, ChevronRight } from "lucide-react";
 
 export default function Directory() {
   const { data, isLoading } = useGetUsers();
@@ -35,20 +35,19 @@ export default function Directory() {
                 className="glass-card p-5 rounded-2xl flex items-center justify-between group hover:bg-white/10 hover:border-primary/50 transition-all cursor-pointer block"
               >
                 <div className="flex items-center gap-3">
-                  {/* 🌟 التعديل هنا: غلاف دائري يحتوي على صورة البروفايل */}
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center border border-white/10 overflow-hidden shrink-0">
+                  {/* 🌟 الغلاف الدائري المحسن للصورة */}
+                  <div className="w-10 h-10 rounded-full bg-white/10 border border-white/10 overflow-hidden shrink-0">
                     <img 
                       src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.username}&background=random`} 
                       alt={user.username}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        // في حال فشل تحميل الصورة، نعرض الأيقونة الافتراضية
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.parentElement?.classList.add('flex', 'items-center', 'justify-center');
+                        // إذا كانت الصورة الأساسية معطوبة، استبدلها بصورة الحرف الأول فوراً
+                        if (!e.currentTarget.src.includes('ui-avatars')) {
+                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.username}&background=random`;
+                        }
                       }}
                     />
-                    {/* أيقونة بديلة تظهر فقط إذا فشل تحميل الصورة تماماً */}
-                    <UserIcon className="w-5 h-5 text-white/80 hidden fallback-icon" />
                   </div>
                   <div>
                     <p className="font-semibold text-white group-hover:text-primary transition-colors">@{user.username}</p>
