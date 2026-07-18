@@ -3,6 +3,9 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Users, ChevronRight } from "lucide-react";
 
+// 🌟 جلب الرابط الأساسي للموقع تماماً كما في صفحة البروفايل
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 export default function Directory() {
   const { data, isLoading } = useGetUsers();
 
@@ -35,14 +38,14 @@ export default function Directory() {
                 className="glass-card p-5 rounded-2xl flex items-center justify-between group hover:bg-white/10 hover:border-primary/50 transition-all cursor-pointer block"
               >
                 <div className="flex items-center gap-3">
-                  {/* 🌟 الغلاف الدائري المحسن للصورة */}
                   <div className="w-10 h-10 rounded-full bg-white/10 border border-white/10 overflow-hidden shrink-0">
                     <img 
-                      src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.username}&background=random`} 
+                      // 🌟 التعديل السحري هنا: إضافة BASE/api/storage قبل رابط الصورة
+                      src={user.avatarUrl ? `${BASE}/api/storage${user.avatarUrl}` : `https://ui-avatars.com/api/?name=${user.username}&background=random`} 
                       alt={user.username}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        // إذا كانت الصورة الأساسية معطوبة، استبدلها بصورة الحرف الأول فوراً
+                        // إذا فشلت الصورة لسبب ما، نعود للحرف الأول
                         if (!e.currentTarget.src.includes('ui-avatars')) {
                           e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.username}&background=random`;
                         }
